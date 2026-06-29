@@ -1,6 +1,6 @@
 <?php
-$config = require __DIR__ . '/../config.php';
-require __DIR__ . '/../src/Storage.php';
+$config = require __DIR__ . '/config.php';
+require __DIR__ . '/src/Storage.php';
 $storage = new Storage($config['storage_path']);
 $path = trim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), '/');
 if ($path === 'robots.txt') {
@@ -23,8 +23,8 @@ if (str_starts_with($path, 'article/')) {
     $slug = basename($path);
     $article = $storage->readJson('articles/' . $slug . '.json', null);
     if (!$article) { http_response_code(404); echo 'Not found'; exit; }
-    include __DIR__ . '/../src/views/article.php';
+    include __DIR__ . '/src/views/article.php';
     exit;
 }
 $articles = array_filter($storage->listJson('articles'), fn ($a) => ($a['status'] ?? 'draft') === 'published');
-include __DIR__ . '/../src/views/home.php';
+include __DIR__ . '/src/views/home.php';
