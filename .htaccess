@@ -1,20 +1,52 @@
 Options -Indexes
 DirectoryIndex index.php
 
+# Disable directory listing
+<FilesMatch "^\.(htaccess|htpasswd|env|git)$">
+    Deny from all
+</FilesMatch>
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteRule ^(src|cron|data)(/|$) - [F,L]
-    RewriteRule ^config\.php$ - [F,L]
 
+    # Protect sensitive directories
+    RewriteRule ^(src|cron|data|backups)(/|$) - [F,L]
+    RewriteRule ^(config\.php|\..*|.*\.lock|.*\.json)$ - [F,L]
+
+    # API routing
+    RewriteRule ^api/(.*)$ api.php [QSA,L]
+
+    # Public files and directories
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
+    # Route everything else to index.php
     RewriteRule ^ index.php [L]
 </IfModule>
 
+# Security headers
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
     Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+</IfModule>
+
+# Performance optimization
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Cache static assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 30 days"
+    ExpiresByType application/javascript "access plus 30 days"
+    ExpiresByType image/jpeg "access plus 60 days"
+    ExpiresByType image/gif "access plus 60 days"
+    ExpiresByType image/png "access plus 60 days"
+    ExpiresByType application/json "access plus 1 hour"
 </IfModule>
